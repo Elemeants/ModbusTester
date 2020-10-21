@@ -34,12 +34,14 @@ var testCmd = &cobra.Command{
 		green := color.New(color.FgGreen).SprintFunc()
 
 		options := serial.OpenOptions{
-			PortName:              devicePort,
-			BaudRate:              baudRate,
-			DataBits:              8,
-			StopBits:              1,
-			MinimumReadSize:       4,
-			InterCharacterTimeout: 2000,
+			PortName:               devicePort,
+			BaudRate:               baudRate,
+			DataBits:               8,
+			StopBits:               1,
+			MinimumReadSize:        4,
+			InterCharacterTimeout:  2000,
+			Rs485Enable:            true,
+			Rs485RtsHighDuringSend: true,
 		}
 
 		color.Yellow("======================= TEST MODBUS =======================")

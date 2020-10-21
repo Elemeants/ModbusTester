@@ -26,6 +26,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var mustRepeat bool
+var asTable bool
 var showAll bool
 
 var pomasSensors []utils.ModbusSensor
@@ -60,12 +62,14 @@ var pomasCmd = &cobra.Command{
 		green := color.New(color.FgGreen).SprintFunc()
 
 		options := serial.OpenOptions{
-			PortName:              devicePort,
-			BaudRate:              baudRate,
-			DataBits:              8,
-			StopBits:              1,
-			MinimumReadSize:       4,
-			InterCharacterTimeout: 2000,
+			PortName:               devicePort,
+			BaudRate:               baudRate,
+			DataBits:               8,
+			StopBits:               1,
+			MinimumReadSize:        4,
+			InterCharacterTimeout:  2000,
+			Rs485Enable:            true,
+			Rs485RtsHighDuringSend: true,
 		}
 
 		color.Yellow("======================= POMAS MODBUS =======================")
@@ -82,11 +86,20 @@ var pomasCmd = &cobra.Command{
 			defer port.Close()
 		}
 
-		for _, sensor := range pomasSensors {
-			sensor.Read(&port)
-			time.Sleep(time.Millisecond * 500)
-		}
+		for {
 
+			for _, sensor := range pomasSensors {
+				if asTable {
+					sensor.ReadAsTable(&port)
+				} else {
+					sensor.Read(&port)
+				}
+				time.Sleep(time.Millisecond * 500)
+			}
+			if !mustRepeat {
+				return
+			}
+		}
 	},
 }
 
@@ -96,24 +109,26 @@ func init() {
 	pomasCmd.Flags().UintVarP(&baudRate, "baudrate", "b", 9600, "SerialCOM baudrate")
 
 	pomasCmd.Flags().BoolVarP(&showAll, "show", "s", false, "Show all sensors registrated")
+	pomasCmd.Flags().BoolVarP(&asTable, "table", "t", false, "Measure as table")
+	pomasCmd.Flags().BoolVarP(&mustRepeat, "repeat", "r", false, "Repeat measures")
 
 	// Sensors
-	pomasSensors = make([]utils.ModbusSensor, 15)
+	pomasSensors = make([]utils.ModbusSensor, 14)
 
-	pomasSensors[1] = *utils.NewModbusSensor(uint(0x1), utils.SensorSoil)
-	pomasSensors[2] = *utils.NewModbusSensor(uint(0x2), utils.SensorSoil)
-	pomasSensors[3] = *utils.NewModbusSensor(uint(0x3), utils.SensorSoil)
-	pomasSensors[4] = *utils.NewModbusSensor(uint(0x4), utils.SensorSoil)
-	pomasSensors[5] = *utils.NewModbusSensor(uint(0x5), utils.SensorSoil)
-	pomasSensors[6] = *utils.NewModbusSensor(uint(0x6), utils.SensorSoil)
+	pomasSensors[0] = *utils.NewModbusSensor(uint(0x1), utils.SensorSoil)
+	pomasSensors[1] = *utils.NewModbusSensor(uint(0x2), utils.SensorSoil)
+	pomasSensors[2] = *utils.NewModbusSensor(uint(0x3), utils.SensorSoil)
+	pomasSensors[3] = *utils.NewModbusSensor(uint(0x4), utils.SensorSoil)
+	pomasSensors[4] = *utils.NewModbusSensor(uint(0x5), utils.SensorSoil)
+	pomasSensors[5] = *utils.NewModbusSensor(uint(0x6), utils.SensorSoil)
 
-	pomasSensors[7] = *utils.NewModbusSensor(uint(0x7), utils.SensorPh)
-	pomasSensors[8] = *utils.NewModbusSensor(uint(0x8), utils.SensorPh)
-	pomasSensors[9] = *utils.NewModbusSensor(uint(0x9), utils.SensorPh)
-	pomasSensors[10] = *utils.NewModbusSensor(uint(0x10), utils.SensorPh)
-	pomasSensors[11] = *utils.NewModbusSensor(uint(0x11), utils.SensorPh)
-	pomasSensors[12] = *utils.NewModbusSensor(uint(0x12), utils.SensorPh)
+	pomasSensors[6] = *utils.NewModbusSensor(uint(0x7), utils.SensorPh)
+	pomasSensors[7] = *utils.NewModbusSensor(uint(0x8), utils.SensorPh)
+	pomasSensors[8] = *utils.NewModbusSensor(uint(0x9), utils.SensorPh)
+	pomasSensors[9] = *utils.NewModbusSensor(uint(0x10), utils.SensorPh)
+	pomasSensors[10] = *utils.NewModbusSensor(uint(0x11), utils.SensorPh)
+	pomasSensors[11] = *utils.NewModbusSensor(uint(0x12), utils.SensorPh)
 
-	pomasSensors[13] = *utils.NewModbusSensor(uint(0x13), utils.SensorLeaf)
-	pomasSensors[14] = *utils.NewModbusSensor(uint(0x14), utils.SensorLeaf)
+	// pomasSensors[12] = *utils.NewModbusSensor(uint(0x13), utils.SensorLeaf)
+	// pomasSensors[13] = *utils.NewModbusSensor(uint(0x14), utils.SensorLeaf)
 }
